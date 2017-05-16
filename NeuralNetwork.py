@@ -54,12 +54,13 @@ for j in range(10):
   X_out = out_s.drop(to_remove, axis=1)
   y_out = out_s['y']
   for key_val in score_positive2.keys():
-    regressor=MLPRegressor(hidden_layer_sizes=key_val,activation="logistic",max_iter=80000)
+    regressor=MLPRegressor(hidden_layer_sizes=key_val,activation="logistic",max_iter=40000)
     regressor=regressor.fit(X_clean,y_clean)
     y_pred=regressor.predict(X_out)
-    score2=r2_score(y_out,y_pred,out_s['weight'])
-    if score2>0.0001:
+    score2=r2_score(y_out*y_fixed_std,y_pred*y_fixed_std,out_s['weight'])
+    if score2>0:
         score_positive2[key_val].append(score2)
         print(key_val,score2)
 
-print(score_positive2)
+for key_val in score_positive2.keys():
+    print(key_val,np.mean(score_positive2[key_val]),len(score_positive2[key_val]))

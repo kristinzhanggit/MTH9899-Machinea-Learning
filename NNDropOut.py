@@ -9,7 +9,7 @@ warnings.filterwarnings('ignore')
 n=len(total_data)
 
 class RandomDropout(object):
-    def __init__(self, total_data, cols_use, first_num, second_num, not_include=not_include1, cv_folds=5):
+    def __init__(self, total_data, cols_use, first_num, second_num, y_std=y_fixed_std, not_include=not_include1, cv_folds=5):
         self.total_data=total_data
         self.y_pred=np.zeros(len(self.total_data))
         self.out_size=int(len(self.total_data)/cv_folds)
@@ -19,6 +19,7 @@ class RandomDropout(object):
         self.to_remove=[col for col in self.total_data.columns.values if col not in cols_use]
         self.cols_use=cols_use
         self.not_include=not_include
+        self.y_factor=y_std
 
     def Dropout_set(self):
         self.layer_map={}
@@ -51,7 +52,10 @@ class RandomDropout(object):
         for key_val in self.layer_map.keys():
             self.Regress(key_val)
         r2=r2_score(self.total_data['y'],self.y_pred,self.total_data['weight'])
-        print(r2)
+        return r2
+
+    def GetPred(self):
+        return self.y_pred
 
     def Predict(self,sample_data):
         predict_y=np.zeros(len(sample_data))
@@ -59,12 +63,13 @@ class RandomDropout(object):
         y_clean = in_clean['y']
         x_clean = in_clean.drop(self.to_remove, axis=1)
         x_out = sample_data.drop(self.to_remove, axis=1)
+        x_out=Normalize(x_out)
         for key_val in self.layer_map.keys():
             regressor = MLPRegressor(hidden_layer_sizes=key_val, activation='logistic', max_iter=80000)
             regressor = regressor.fit(x_clean, y_clean)
             y_pred = regressor.predict(x_out)
             predict_y+=y_pred*self.layer_map[key_val]
-        return predict_y
+        return predict_y*self.y_factor
 
 def run_model(your_model, data):
     return your_model.Predict(data)

@@ -11,9 +11,9 @@ with open("ml_finalproj_train_vF.pkl","rb") as f:
 not_include1=['x29','x42','x30','x2','x6','x46','x25','x13','x28','x51','timestamp','id']
 data=data.drop('id',axis=1)
 y=data['y'].copy()
-y_fixed_m=np.mean(y)
 y_fixed_std=np.std(y)
-y=(y-y_fixed_m)/y_fixed_std
+#y_fixed_std=1
+y=y/y_fixed_std
 X=data.drop(['weight','y','timestamp'],axis=1)
 weight=data['weight']
 
