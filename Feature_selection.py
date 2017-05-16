@@ -1,34 +1,33 @@
 import pickle
 import numpy as np
+import pandas as pd
 from sklearn.feature_selection import SelectFromModel
 from sklearn.linear_model import LassoCV
-
+import matplotlib.pyplot as plt
 
 with open("ml_finalproj_train_vF.pkl","rb") as f:
     data=pickle.load(f)
 
 not_include1=['x29','x42','x30','x2','x6','x46','x25','x13','x28','x51','timestamp','id']
 data=data.drop('id',axis=1)
+y=data['y'].copy()
+y_fixed_m=np.mean(y)
+y_fixed_std=np.std(y)
+y=(y-y_fixed_m)/y_fixed_std
+X=data.drop(['weight','y','timestamp'],axis=1)
+weight=data['weight']
 
-'''normalize non-categorical data'''
 def Normalize(data,not_include=not_include1):
-    time_stamp = data['timestamp'].drop_duplicates()
-    print(len(time_stamp))
-    for i in range(len(time_stamp)):
-        t = time_stamp.iloc[i]
-        for col in data.columns.values:
-            if col in not_include: continue
-            data.loc[data['timestamp'].isin([t]),col]=(data.loc[data['timestamp'].isin([t]),col]-np.mean(data.loc[data['timestamp'].isin([t]),col]))/np.std(data.loc[data['timestamp'].isin([t]),col])
+    for col in data.columns.values:
+        if col in not_include: continue
+        data[col]=(data[col]-np.mean(data[col]))/np.std(data[col])
     return data
 
-'''use lasso to select features'''
-def LassoSelect(data, cv_fold):
-    X=data.drop('y',axis=1)
-    y=data['y']
+def LassoSelect(X,y,cv_fold):
     estimator=LassoCV(cv=cv_fold).fit(X,y)
     selector=SelectFromModel(estimator,prefit=True)
-    print(X.columns.values[selector.get_support()])
-    return selector
+    return X.columns.values[selector.get_support()]
 
-data=Normalize(data)
-LassoSelect(data,5)
+X=Normalize(X)
+cols_use=LassoSelect(X,y,5)
+total_data=pd.concat([X,y,weight],axis=1)
